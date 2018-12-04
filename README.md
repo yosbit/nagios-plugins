@@ -1,8 +1,7 @@
 # Nagios Plugins
 
-# Nagios plugins for monitoring Windows system using NSClient.
- 
-## Monitor:
+# Monitor Windows system using NSClient.
+
   ## Windows system
   - Disks
   - Files
