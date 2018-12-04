@@ -41,5 +41,3 @@
     [/settings/external scripts/scripts]
     check_name = cmd /c echo scripts\check_name.ps1 $ARG1$ ; exit($lastexitcode) | powershell.exe -ExecutionPolicy Bypass  -command -
 
-
-
