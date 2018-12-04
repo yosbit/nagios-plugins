@@ -12,7 +12,7 @@
   - Exchange Databases
   - Queue				
   
-  ## MS SQL Servers
+  ## MS SQL Servers 
   - Database 
   - Jobs
   - Connection Time
@@ -40,7 +40,10 @@
     add the followings lines under:
     [/settings/external scripts/scripts]
     check_name = cmd /c echo scripts\check_name.ps1 $ARG1$ ; exit($lastexitcode) | powershell.exe -ExecutionPolicy Bypass  -command -
-     
+    
+# Download 
+https://github.com/yosbit/nagios-plugins/releases
+
 [![Donate](https://www.paypalobjects.com/en_US/IL/i/btn/btn_donateCC_LG.gif)](https://paypal.me/yosbit)
 
 
