@@ -41,3 +41,4 @@
     [/settings/external scripts/scripts]
     check_name = cmd /c echo scripts\check_name.ps1 $ARG1$ ; exit($lastexitcode) | powershell.exe -ExecutionPolicy Bypass  -command -
 
+[![Donate](https://www.paypalobjects.com/webstatic/en_US/i/btn/png/btn_buynow_107x26.png)](https://paypal.me/yosbit)
