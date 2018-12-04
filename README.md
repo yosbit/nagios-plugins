@@ -5,25 +5,25 @@
  
 # Monitor:
   # Windows system
-			Disks
-			Files
-			NTP
-			Windows Services			
+	Disks
+	Files
+	NTP
+	Windows Services			
+  
   # Exchange
-			Automatic detect exchange version and monitor:
-				Exchange Databases
-				Queue
-						
+	Exchange Databases
+	Queue				
+  
   # MS SQL Servers
-			Database 
-			Jobs
-			Connection Time
-			Temp DB size
-			Log file size
+	Database 
+	Jobs
+	Connection Time
+	Temp DB size
+	Log file size
 			
   # Internet Information Services (IIS)
-			Application Pool
-			Web Sites
+	Application Pool
+	Web Sites
 
 # Prerequisites 
 	NSClient version 3.09 or later.
