@@ -2,6 +2,7 @@
   .SYNOPSIS
   
   .DESCRIPTION
+   Script for nagios to check SQL DataBases, Connection Time, Jobs, TempDB Size, Log Size.
    The script get all sql instances in the server, and return status for eache instance
    You can use check_mssql_config.ini to exclude DB or instance to check, read check_mssql_config.ini help.
   
