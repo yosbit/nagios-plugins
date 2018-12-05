@@ -32,17 +32,25 @@
    
   .EXAMPLE
     ./check_nrpe -H <MSSQL IP Address> -c check_mssql -a 'DBStatus'
-	./check_nrpe -H <MSSQL IP Address> -c check_mssql -a 'ConTime'
+	./check_nrpe -H <MSSQL IP Address> -c check_mssql -a 'ConnectionTime'
 	./check_nrpe -H <MSSQL IP Address> -c check_mssql -a 'Jobs'
 	./check_nrpe -H <MSSQL IP Address> -c check_mssql -a 'TempDBSize'
 	./check_nrpe -H <MSSQL IP Address> -c check_mssql -a 'LogSize'
   
-   for Nagios NRPE edit NSC.ini or nsclient.ini and add the following line under section:
-	[Wrapped Scripts] 
+    NSClient with NSC.ini config file (old version)
+	Edit NRPE config:
+	Edit NSC.ini or nsclient.ini and add the following line under section:
+	[Wrapped Scripts]
 	check_mssql=check_mssql.ps1 $ARG1$
 	[Script Wrappings]
-	ps1 = cmd /c echo scripts\%SCRIPT% %ARGS%; exit($lastexitcode) | powershell.exe -ExecutionPolicy Bypass -command -
-	
+	ps1 = cmd /c echo scripts\%SCRIPT%%ARGS%; exit($lastexitcode) | powershell.exe -ExecutionPolicy Bypass -command - 
+
+	NSClient with nsclient.ini config file (new version)
+
+	add the followings lines under:
+	[/settings/external scripts/scripts]
+	check_mssql = cmd /c echo scripts\check_mssql.ps1 $ARG1$ ; exit($lastexitcode) | powershell.exe -ExecutionPolicy Bypass  -command -
+
 	
 #>
 [CmdletBinding()]
