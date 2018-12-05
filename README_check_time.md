@@ -26,7 +26,7 @@ Version 1.1.3
 	.\check_time.ps1  ( Works with default params)  
 
 ## Instalation
-### >NSClient with NSC.ini config file (old version)
+### NSClient with NSC.ini config file (old version)
      Edit NRPE config:
      Edit NSC.ini or nsclient.ini and add the following line under section:
      [Wrapped Scripts]
@@ -34,7 +34,7 @@ Version 1.1.3
      [Script Wrappings]
      ps1 = cmd /c echo scripts\%SCRIPT%%ARGS%; exit($lastexitcode) | powershell.exe -ExecutionPolicy Bypass -command - 
 	
-### > NSClient with nsclient.ini config file (new version)
+### NSClient with nsclient.ini config file (new version)
      add the followings lines under:
      [/settings/external scripts/scripts]
      check_time = cmd /c echo scripts\check_time.ps1 $ARG1$ ; exit($lastexitcode) | powershell.exe -ExecutionPolicy Bypass  -command -
