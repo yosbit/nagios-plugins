@@ -1,6 +1,6 @@
 [![Donate](https://www.paypalobjects.com/en_US/IL/i/btn/btn_donateCC_LG.gif)](https://paypal.me/yosbit)
 ## Description:
-Script for nagios to check time against NTP servers, then automaticly correct the time and date offset is abouve or bellow
+Script for nagios to check time against NTP servers, then automaticly correct the time and date, if offset is abouve or bellow
 threshold levels.
 You can add multi NTP servers with comma separated
 
