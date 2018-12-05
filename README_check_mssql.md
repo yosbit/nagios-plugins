@@ -48,5 +48,5 @@ needs dbowner permissions for user Service Account.
     add the followings lines under:
     [/settings/external scripts/scripts]
     check_mssql = cmd /c echo scripts\check_mssql.ps1 $ARG1$ ; exit($lastexitcode) | powershell.exe -ExecutionPolicy Bypass  -command -
-
+## [Download - check_mssql.ps1](https://github.com/yosbit/nagios-plugins/blob/master/check_mssql.ps1)
 [![Donate](https://www.paypalobjects.com/en_US/IL/i/btn/btn_donateCC_LG.gif)](https://paypal.me/yosbit)
