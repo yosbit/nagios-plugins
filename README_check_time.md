@@ -38,5 +38,5 @@ Version 1.1.3
      add the followings lines under:
      [/settings/external scripts/scripts]
      check_time = cmd /c echo scripts\check_time.ps1 $ARG1$ ; exit($lastexitcode) | powershell.exe -ExecutionPolicy Bypass  -command -
-## [Download - check_time.ps1](https://github.com/yosbit/nagios-plugins/blob/master/check_time.ps1)
+## [Download - check_time.ps1](https://github.com/yosbit/nagios-plugins/releases/download/1.1.2/check_time.ps1)
 [![Donate](https://www.paypalobjects.com/en_US/IL/i/btn/btn_donateCC_LG.gif)](https://paypal.me/yosbit)
