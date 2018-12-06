@@ -9,28 +9,28 @@ Date: November 2018
 Version 1.1.0
 
 ### PARAMETER CheckType
-		"DBStatus" - Check all exchange databases if mounted or not, return Critical if one database is not mounted.
-		"Queue"    - Check all queue in exchange server if empty or not. if queue items greater than Warn or Crit.
+    "DBStatus" - Check all exchange databases if mounted or not, return Critical if one database is not mounted.
+    "Queue"    - Check all queue in exchange server if empty or not. if queue items greater than Warn or Crit.
 ### PARAMETER ExchangeVer (Optional)
-		"2007" , "2010", "2013" ,"2016" - not needed, the plugin automaticly get the exchange version, and load the relevant PS-Module.
+    "2007" , "2010", "2013" ,"2016" - not needed, the plugin automaticly get the exchange version, and load the relevant PS-Module.
 ### PARAMETER Warn
-		integer - Used for test Queue, set the number of items in queue.
+    integer - Used for test Queue, set the number of items in queue.
 ### PARAMETER Crit
-		integer - Used for test Queue, set the number of items in queue.
+    integer - Used for test Queue, set the number of items in queue.
 ### PARAMETER Debug
-		Debug Mode.
+    Debug Mode.
 		
 ### EXAMPLE
-	Check all exchange db status:
-	.\check_exchange.ps1 -CheckType DBStatus 
-	.\check_exchange.ps1 DBStatus
+    Check all exchange db status:
+    .\check_exchange.ps1 -CheckType DBStatus 
+    .\check_exchange.ps1 DBStatus
+
+    Check exchange queue 
+    .\check_exchange.ps1 -CheckType Queue -Warn 10 -Crit 50
+     this command also works, using args position:
+    .\check_exchange.ps1  Queue 10 50 
 	
-	Check exchange queue 
-	.\check_exchange.ps1 -CheckType Queue -Warn 10 -Crit 50
-	this command also works, using args position:
-	.\check_exchange.ps1  Queue 10 50 
-	
-	## Instalation
+## Instalation
 ### NSClient with NSC.ini config file (old version)
      Edit NRPE config:
      Edit NSC.ini or nsclient.ini and add the following line under section:
