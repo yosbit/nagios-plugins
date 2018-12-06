@@ -2,9 +2,8 @@
   .SYNOPSIS
    
   .DESCRIPTION
-   Script for nagios to check time against NTP servers, then automaticly correct the time and date offset is abouve or bellow
-   threshold levels.
-   You can add multi NTP servers with comma separated
+   Script for nagios to check time against a NTP servers, and fixing the time automaticly if needed.
+   You can use comma separated to use more than one server.
    
   .NOTES
    Auther Yossi Bitton yosbit@gmail.com
@@ -13,13 +12,13 @@
    
    .PARAMETER NTPServers
     NTP server IP or DNS name.
-	for more than one NTP server, use: ntp_server_ip1,ntp_server_ip2
+	to use more than one server, set parameter:  ntp_server_ip1,ntp_server_ip2
 	
-   .PARAMETER secondsDiffWarn - Alias -W
-	If offset is bellow or above from secondsDiffWarn in seconds, the script try to fix the time, if fix is failed exit with WARNING.
+   .PARAMETER Warn - Alias -W
+	If offset is below or above Warning value in seconds, the script try to fix the time, if failed exitin with WARNING
 	
-	.PARAMETER secondsDiffWarn Alias -C
-	If offset is bellow or above from secondsDiffCrit in seconds, the script try to fix the time, if fix is failed exit with CRITICAL.
+	.PARAMETER Crit Alias -C
+	If offset is below or above Warning value in seconds, the script try to fix the time, if failed exitin with CRITICAL.
 	
   .EXAMPLE
 	.\check_time.ps1  -NTPServers 192.168.1.1 -W 5 -C 15
@@ -46,9 +45,9 @@ Param(
 	[parameter(Mandatory=$false)] 
 	[String[]]$NTPServers=@("timeserver.iix.net.il" ,"0.pool.ntp.org"),
 	[Alias("W")]
-	[int]$secondsDiffWarn=5 ,
+	[int]$Warn=5 ,
 	[Alias("C")]
-	[int]$secondsDiffCrit=30
+	[int]$Crit=30
 	
 )
 
@@ -95,7 +94,7 @@ begin {
 	
 }
 	
-Function Get-Time-Diff ($ntpDate)
+Function Get-Time-Diff ($ntpDate , $commandTime)
 	{
 	try {
 		$localDate = Get-Date
@@ -103,20 +102,20 @@ Function Get-Time-Diff ($ntpDate)
 		Write-Debug "NTP Date: $ntpDate"
 		$timeDiff = New-TimeSpan -Start $localDate -End $ntpDate
 		Write-Debug "timeDiff = $timeDiff"
-		$secondsDiff = ($timeDiff.TotalSeconds)
+		$secondsDiff = ($timeDiff.TotalSeconds - $commandTime )
 		if ($secondsDiff -lt 0) {
 			$secondsDiff = $secondsDiff * -1
 		}
 		Write-Debug "secondsDiff = $secondsDiff"
-		if ($secondsDiff -gt $secondsDiffCrit) {
+		if ($secondsDiff -gt $Crit) {
 			$desc = "NTP CRITICAL, Offset: $secondsDiff seconds."
 			$setDate = Set-date -Date $ntpDate
 			$retCode = $CRITICAL
-		}elseif($secondsDiff -gt $secondsDiffWarn) {
+		}elseif($secondsDiff -gt $Warn) {
 			$desc = "NTP WARNING, Offset: $secondsDiff seconds."
 			$setDate = Set-date -Date $ntpDate
 			$retCode = $WARNING
-		}elseif ($secondsDiff -lt $secondsDiffWarn){
+		}elseif ($secondsDiff -lt $Warn){
 			$desc = "NTP OK, Offset: $secondsDiff seconds."
 			$retCode = $OK
 		}else{
@@ -148,11 +147,12 @@ process {
 		
 	try {
 		foreach ($NTPServer in $NTPServers) {
-			$retCode, $desc ,$ntpDate = Connect-To-NTP $NTPServer
+			$commandTime = (Measure-Command {$retCode, $desc ,$ntpDate = Connect-To-NTP $NTPServer}).TotalSeconds 
+			Write-Debug "commandTime=$commandTime"
 			Write-Debug "Connect status: $retcode , Desc: $desc"
 			# Get the time diff between local server date and time, and NTP Server.
 			if ($retCode -eq $OK) {
-				$retCode , $desc = Get-Time-Diff $ntpDate
+				$retCode , $desc = Get-Time-Diff $ntpDate $commandTime
 				# Sync again before return non OK.
 				if ($retCode -eq $CRITICAL -or $retCode -eq $WARNING) {
 					Write-Debug "Going to resync the date again"
