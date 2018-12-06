@@ -8,7 +8,7 @@
   - [Check Time](https://github.com/yosbit/nagios-plugins/blob/master/README/README_check_time.md)
   - Windows Services			
   
-### Exchange
+### [Exchange](https://github.com/yosbit/nagios-plugins/blob/master/README/README_check_exchange.md)
   - Exchange Databases
   - Queue				
   
