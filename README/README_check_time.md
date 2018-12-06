@@ -1,8 +1,7 @@
 [![Donate](https://www.paypalobjects.com/en_US/IL/i/btn/btn_donateCC_LG.gif)](https://paypal.me/yosbit)
 ## Description:
-Script for nagios to check time against NTP servers, then automaticly correct the time and date, if offset is abouve or bellow
-threshold levels.
-You can add multi NTP servers with comma separated
+Script for nagios to check time against a NTP servers, and fixing the time automaticly if needed.
+You can use comma separated to use more than one server.
 
 ## Auther:
 Yossi Bitton yosbit@gmail.com
@@ -11,13 +10,13 @@ Version 1.1.3
 
 ### PARAMETER NTPServers
     NTP server IP or DNS name.
-	for more than one NTP server, use: ntp_server_ip1,ntp_server_ip2
+	to use more than one server, set parameter:  ntp_server_ip1,ntp_server_ip2
 	
-### PARAMETER secondsDiffWarn - Alias -W
-	If offset is bellow or above from secondsDiffWarn in seconds, the script try to fix the time, if fix is failed exit with WARNING.
+### PARAMETER Warn - Alias -W
+	If offset is below or above Warning value in seconds, the script try to fix the time, if failed exitin with WARNING
 	
-### PARAMETER secondsDiffWarn Alias -C
-	If offset is bellow or above from secondsDiffCrit in seconds, the script try to fix the time, if fix is failed exit with CRITICAL.
+### PARAMETER Crit Alias -C
+	If offset is below or above Warning value in seconds, the script try to fix the time, if failed exitin with CRITICAL.
 	
 ### EXAMPLE
 	.\check_time.ps1  -NTPServers 192.168.1.1 -W 5 -C 15
