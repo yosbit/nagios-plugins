@@ -8,11 +8,11 @@
   - [Check Time](https://github.com/yosbit/nagios-plugins/blob/master/README/README_check_time.md)
   - Windows Services			
   
-### [Exchange](https://github.com/yosbit/nagios-plugins/blob/master/README/README_check_exchange.md)
+### [Exchange - all in one](https://github.com/yosbit/nagios-plugins/blob/master/README/README_check_exchange.md)
   - Exchange Databases
   - Queue				
   
-### [MS SQL Servers](https://github.com/yosbit/nagios-plugins/blob/master/README/README_check_mssql.md)
+### [MS SQL Servers - all in one](https://github.com/yosbit/nagios-plugins/blob/master/README/README_check_mssql.md)
   - Database 
   - Jobs
   - Connection Time
