@@ -5,14 +5,14 @@
 ### Windows system
   - Disks
   - Files
-  - [Check Time](https://github.com/yosbit/nagios-plugins/blob/master/README_check_time.md)
+  - [Check Time](https://github.com/yosbit/nagios-plugins/blob/master/README/README_check_time.md)
   - Windows Services			
   
 ### Exchange
   - Exchange Databases
   - Queue				
   
-### [MS SQL Servers](https://github.com/yosbit/nagios-plugins/blob/master/README_check_mssql.md)
+### [MS SQL Servers](https://github.com/yosbit/nagios-plugins/blob/master/README/README_check_mssql.md)
   - Database 
   - Jobs
   - Connection Time
