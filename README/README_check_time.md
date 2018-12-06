@@ -13,16 +13,16 @@ Version 1.1.3
 	to use more than one server, set parameter:  ntp_server_ip1,ntp_server_ip2
 	
 ### PARAMETER Warn - Alias -W
-	If offset is below or above Warning value in seconds, the script try to fix the time, if failed exitin with WARNING
+	If offset is below or above Warning value in seconds, the script try to fix the time, if failed exiting with WARNING
 	
 ### PARAMETER Crit Alias -C
-	If offset is below or above Warning value in seconds, the script try to fix the time, if failed exitin with CRITICAL.
+	If offset is below or above Warning value in seconds, the script try to fix the time, if failed exiting with CRITICAL.
 	
 ### EXAMPLE
 	.\check_time.ps1  -NTPServers 192.168.1.1 -W 5 -C 15
 	.\check_time.ps1  -NTPServers 192.168.1.1,192.168.10.100 -W 5 -C 15
 	.\check_time.ps1  -NTPServers 192.168.1.1,192.168.10.100 -W 5 -C 15 -Debug	
-	.\check_time.ps1  ( Works with default params)  
+	.\check_time.ps1  ( Works with default parameters)  
 
 ## Instalation
 ### NSClient with NSC.ini config file (old version)
