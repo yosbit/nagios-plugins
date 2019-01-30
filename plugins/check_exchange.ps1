@@ -199,6 +199,9 @@ Function Get_DataBase_Status () {
 				$totalMountedDb = $mountedDb.Count
 				$retCode = $OK
 				$desc = "All Exchange DB are mounted, Databases: $($mountedDb.Name) Total: $totalDB"
+				foreach ($db in $dblist) {
+				   $desc += "<br/>$($db.Name) is mounted on $($db.MountedOnServer)"
+				}
 			}else {
 				$retCode = $CRITICAL
 				$desc = "The Database: $($notMountedDb.Name) not mounted. [$($notMountedDb.Count)\$($totalDB.Count)]"
