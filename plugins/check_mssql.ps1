@@ -1,4 +1,4 @@
-<#
+﻿<#
   .SYNOPSIS
   
   .DESCRIPTION
@@ -253,6 +253,7 @@ Function Get-TempDB-Size ($InstancesList) {
 	$failedToConnectCount = 0
 	$isCritical = $False
 	$isWarning = $False
+    $perfData = "| "
 	
 	try  {
 		$temp_db_threshold_values = Get-Treshold-From-Ini $SQL_CONFIG_TEMPDB_SIZE_NAME $SQL_TEMPDB_THRESHOLD_SECTION
@@ -281,6 +282,8 @@ Function Get-TempDB-Size ($InstancesList) {
 				Write-Debug "TempDB mdf files count: $temp_db_mdf_file_count"
 				$instanceRetCode, $instance_desc = Get-TempDB-Threshold $temp_db_mdf_file_count 	$temp_db_size $temp_db_threshold_values
 				$desc = "$instance $instance_desc"
+                $perfData += "'"+$instance+"_"+$tempdb+"_Size'=$temp_db_size[MB] "
+                $perfData += "'"+$instance+"_"+$tempdb+"_FileCount'=$temp_db_mdf_file_count "
 				if ($instanceRetCode -eq $CRITICAL) {
 					$critical_desc +=$desc
 				}elseif ($instanceRetCode -eq $WARNING) {
@@ -326,7 +329,7 @@ Function Get-TempDB-Size ($InstancesList) {
 	}
 	$desc = "$instance_status`n$ALL_INSTANCES_SUMMARY" 
 Write-Debug "Get-TempDB-Size return: retCode: $retCode, desc: $desc"
-return $retCode,$desc
+return $retCode,$desc,$perfData
 	
 }
 
@@ -391,6 +394,7 @@ Function Get-LogFile-Size ($InstancesList) {
 	$isCritical = $False
 	$isWarning = $False
 	$all_instance_db=0
+    $perfData="| "
 	$log_size_threshold_values = Get-Treshold-From-Ini $SQL_CONFIG_LOG_FILES_SIZE_NAME $SQL_LOG_FILE_SIZE_THRESHOLD_SECTION
 	if ($log_size_threshold_values -eq $null) {
 		$log_size_threshold_values = $log_file_size_threshold_default_value
@@ -405,13 +409,24 @@ Function Get-LogFile-Size ($InstancesList) {
 				$all_instance_db +=$totalDb 
 				Write-Debug "Total database count=$totalDb"
 				foreach($db in $sqlObj.Databases) {
+                    $Loopcount = $Loopcount+1
 					$dbName = $db.Name
-					$dbSize = [int]$db.Size
-					$dbLogSize = [int](($db.LogFiles[0]).Size)
-					$dbLogSize = [int]($dbLogSize / 1024)
-					Write-Debug "dbName=$dbName dbSize=$dbSize MB. dbLogSize=$dbLogSize MB."
-					$dbLogFileName = $db.LogFiles
-					$desc += "$dbName=$dbSize, Log=$dbLogSize. "  
+            
+                    $queryLogSize = "SELECT mf.[physical_name], CAST(mf.size * 8.0/1024 AS DECIMAL(8)) AS [Size_MB] FROM sys.master_files mf INNER JOIN sys.databases db ON db.database_id = mf.database_id where db.name = '$dbName' and type_desc = 'LOG'"
+                    $queryDbSize = "SELECT SUM(CAST(mf.size * 8.0/1024 AS DECIMAL(8))) AS [Size_MB] FROM sys.master_files mf INNER JOIN sys.databases db ON db.database_id = mf.database_id where db.name = '$dbName' and type_desc = 'ROWS'"
+                    if ( $instance -eq 'MSSQLSERVER' ) {
+					    $dbQueryResultDb = (Invoke-Sqlcmd -Query $queryDbSize)
+                        $dbQueryResultLog = (Invoke-Sqlcmd -Query $queryLogSize)
+                    } else {
+                        $dbQueryResultDb = (Invoke-Sqlcmd -Query $queryDbSize -ServerInstance ${env:computername}\$instance)
+                        $dbQueryResultLog = (Invoke-Sqlcmd -Query $queryLogSize -ServerInstance ${env:computername}\$instance)
+                    }
+                    $dbLogSize = [int]$dbQueryResultLog.Size_MB
+                    $dbSize = [int]$dbQueryResultDb.Size_MB
+					Write-Debug "dbName=$dbName dbSize=$dbSize MB. dbLogSize=$dbLogSize MB. Threshold: $log_size_threshold_values (Database $Loopcount of $totalDb)"
+					$dbLogFileName = $dbQueryResultLog.physical_name
+					$desc += "$dbName=$dbSize, Log=$dbLogSize. "
+                    $perfData += "'"+$dbName+"_Size'=$dbSize[MB] '"+$dbName+"_Log_Size'=$dbLogSize[MB] "
 					$instanceRetCode, $instanceDesc = Get-LogFile-Threshold $dbSize $dbLogSize $log_size_threshold_values
 					if ($instanceRetCode -ne $OK) {
 						Write-Debug "instanceRetCode = $instanceRetCode"
@@ -465,7 +480,7 @@ Function Get-LogFile-Size ($InstancesList) {
 	}
 	$desc = "$instance_status`n$ALL_INSTANCES_SUMMARY_IN_MB" 
 Write-Debug "Get-LogFile-Size return: retCode: $retCode, desc: $desc"
-return $retCode,$desc
+return $retCode,$desc,$perfData
 }
 
 Function Get-DataBases-Status ($InstancesList) {
@@ -484,10 +499,16 @@ Function Get-DataBases-Status ($InstancesList) {
 				$all_instance_db += $totalDb
 				Write-Debug "Total database count: $totalDb"
 				foreach($db in $sqlObj.Databases) {
+					Write-Debug "Connecting to $db"
 					$dbName = $db.Name
-					$dbStatus = $db.Status
+                    $query = "SELECT state_desc from sys.databases where name = '$dbName'"
+                    if ( $instance -eq "MSSQLSERVER" ) {
+                        $dbstatus = (Invoke-Sqlcmd -Query $query).state_desc
+                    } else {
+                        $dbstatus = (Invoke-Sqlcmd -Query $query -ServerInstance ${env:computername}\$instance).state_desc
+                    }
 					$desc += "$dbName=$dbStatus, "
-					if($dbStatus -notlike "*Normal*") {
+					if($dbStatus -notlike "*ONLINE*") {
 						$failedDBCount +=1
 						$failedDB += "$dbName=$dbStatus, "
 					}
@@ -527,8 +548,9 @@ Function Get-DataBases-Status ($InstancesList) {
 		$instance_status = "$critical_desc $unknown_desc"
 	}
 	$desc = "$instance_status`n$ALL_INSTANCES_SUMMARY" 
+    $perfData = "| 'Database_Count'=$all_instance_db"
 Write-Debug "Get-DataBases-Status return: retCode: $retCode, desc: $desc"
-return $retCode,$desc
+return $retCode,$desc, $perfData
 }
 
 Function Connect-To-SQL ($instance,$getTime2Connect){
@@ -582,6 +604,7 @@ function Get-SQL-Jobs-Status ($InstancesList) {
 		if ($connectCode -eq $SUCCESS) {
 			try {
 				$failedJobsCount = 0
+                $missedJobsCount = 0
 				Write-Debug "Going to get jobs list $($sqlObj.Version)"
 				$jobs=$sqlObj.JobServer.Jobs
 				Write-Debug  "All Jobs = $Jobs"
@@ -589,21 +612,36 @@ function Get-SQL-Jobs-Status ($InstancesList) {
 				if ($enabled_jobs -ne $null) {
 					Write-Debug  "Enabled jobs=$enabled_jobs"
 					$enabled_jobs_count = $enabled_jobs.Count
+                    $perfData = "'Jobs'=$enabled_jobs_count "
 					$total_instance_jobs += $enabled_jobs_count
 					$enabled_jobs_name = $enabled_jobs | foreach {$_.Name.Split(".")[0]}
 					Write-Debug "Enabled_jobs_name=$enabled_jobs_name"
 					$failed_jobs = $enabled_jobs | where {$_.IsEnabled -eq $True -and $_.HasSchedule -eq $True -and $_.LastRunOutcome -eq "Failed"}
+                    $missed_jobs = $enabled_jobs | Where-Object {$_.IsEnabled -eq $True -and $_.HasSchedule -eq $True -and $_.NextRunDate -lt (Get-Date) -and $_.NextRunDate -gt (Get-Date "2001-01-01")}
 					if ($failed_jobs -ne $null) {
 						$failed_jobs_name = $failed_jobs | foreach {$_.Name.Split(".")[0]}
 						$failedJobsCount +=1
 						Write-Debug "failed_jobs_name=$failed_jobs_name"
-					}else{
+					} elseif ($missed_jobs -ne $null) {
+                        $missed_jobs_name = $missed_jobs | foreach {$_.Name.Split(".")[0]}
+                        $missedJobsCount +=1
+                        Write-Debug "missed_jobs_name=$missed_jobs_name"
+                    } else {
 						Write-Debug "All Enable jobs are completed success"
 					}
-					if ($failedJobsCount -eq 0) {
-						$desc = "$instance all jobs success, jobs name=$enabled_jobs_name. "
-					}else{
-						$desc = "$instance failed jobs=$failed_jobs_name. "
+                    $perfData = "| 'Jobs_Enabled'=$enabled_jobs_count 'Jobs_Failed'=$failedJobsCount 'Jobs_Missed'=$missedJobsCount"
+                    if ($failedJobsCount -eq 0 -and $missedJobsCount -eq 0) {
+						$desc = "$instance all jobs success, jobs count=$enabled_jobs_count. "
+					} elseif ($failedJobsCount -ne 0 -and $missedJobsCount -eq 0){
+                        $desc = "$instance failed jobs=$failed_jobs_name. "
+						$critical_desc +=$desc
+						$retCode = $CRITICAL
+                    } elseif ($failedJobsCount -eq 0 -and $missedJobsCount -ne 0){
+                        $desc = "$instance missed jobs=$missed_jobs_name. "
+						$critical_desc +=$desc
+						$retCode = $CRITICAL
+                    } else {
+						$desc = "$instance Jobs in unknown state "
 						$critical_desc +=$desc
 						$retCode = $CRITICAL
 					}
@@ -649,7 +687,7 @@ function Get-SQL-Jobs-Status ($InstancesList) {
 	}
 	$desc = "$instance_status`n$ALL_INSTANCES_SUMMARY" 
 	Write-Debug  "Get-SQL-Jobs-Status return=$retCode ,output=$desc"
-	return $retCode , $desc
+	return $retCode , $desc, $perfData
 }
 
 Function Get-SQL-Connection-Time ($InstancesList) {
@@ -660,7 +698,7 @@ Function Get-SQL-Connection-Time ($InstancesList) {
 	foreach ($instance in $InstancesList) {
 		$connectCode, $connectDesc ,$sqlObj ,$time2Connect  = Connect-To-SQL $instance $true
 		if ($connectCode -eq $SUCCESS) {
-			$perfData = "'$instance time to connect'=" + $time2Connect + ";$timeToConnectWarn;$timeToConnectCrit;$time2Connect;`n"
+			$perfData = "'$instance time to connect'=" + $time2Connect + "[s];$timeToConnectWarn;$timeToConnectCrit;$time2Connect;`n"
 			if ($time2Connect -lt $timeToConnectWarn -and $skipCheckOk -ne $True ) {
 				$retCode = $OK
 			}elseif ($time2Connect -gt $timeToConnectCrit){
@@ -741,7 +779,7 @@ process {
 	
 	$SERVER = $env:COMPUTERNAME
 	$SQL_CONFIG_FILE_NAME = "check_mssql_config.ini"
-	$SQL_CONFIG_FILE_FOLDER_NAME=".\"
+	$SQL_CONFIG_FILE_FOLDER_NAME="C:\NCPA\Plugins"
 	$SQL_CONFIG_FILE_FULL_PATH="$SQL_CONFIG_FILE_FOLDER_NAME\$SQL_CONFIG_FILE_NAME"
 	$SQL_CONFIG_EXCLUDE_NAME="Exclude"
 	$SQL_CONFIG_TEMPDB_SIZE_NAME="TempDB Size"
@@ -805,4 +843,3 @@ switch ($retCode)
 	write-host $prefix":" $desc $perfData
         exit $retCode
 } # Close end
-
