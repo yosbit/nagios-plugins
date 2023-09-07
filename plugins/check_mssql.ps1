@@ -1,4 +1,4 @@
-<#
+﻿<#
   .SYNOPSIS
   
   .DESCRIPTION
@@ -9,9 +9,8 @@
   
   .NOTES
    Auther Yossi Bitton yosbit@gmail.com
-   Patch: Nicki Messerschmidt <n.messerschmidt@gmail.com>
-   Date: September 2021
-   Version 1.1.3
+   Date: November 2018 
+   Version 1.1.2
    
   .PARAMETER DBStatus
    Get the database status, return critical if one DB not in normal state.
@@ -21,7 +20,6 @@
    
   .PARAMETER Jobs
    Get the status off all jobs, the script check only Enabled and scheduled jobs.
-   Checks if a job missed its schedule
    
   .PARAMETER TempDBSize
    Get the size of temp DB.
@@ -411,12 +409,22 @@ Function Get-LogFile-Size ($InstancesList) {
 				$all_instance_db +=$totalDb 
 				Write-Debug "Total database count=$totalDb"
 				foreach($db in $sqlObj.Databases) {
+                    $Loopcount = $Loopcount+1
 					$dbName = $db.Name
-					$dbSize = [int]$db.Size
-					$dbLogSize = [int](($db.LogFiles[0]).Size)
-					$dbLogSize = [int]($dbLogSize / 1024)
-					Write-Debug "dbName=$dbName dbSize=$dbSize MB. dbLogSize=$dbLogSize MB."
-					$dbLogFileName = $db.LogFiles
+            
+                    $queryLogSize = "SELECT mf.[physical_name], CAST(mf.size * 8.0/1024 AS DECIMAL(8)) AS [Size_MB] FROM sys.master_files mf INNER JOIN sys.databases db ON db.database_id = mf.database_id where db.name = '$dbName' and type_desc = 'LOG'"
+                    $queryDbSize = "SELECT SUM(CAST(mf.size * 8.0/1024 AS DECIMAL(8))) AS [Size_MB] FROM sys.master_files mf INNER JOIN sys.databases db ON db.database_id = mf.database_id where db.name = '$dbName' and type_desc = 'ROWS'"
+                    if ( $instance -eq 'MSSQLSERVER' ) {
+					    $dbQueryResultDb = (Invoke-Sqlcmd -Query $queryDbSize)
+                        $dbQueryResultLog = (Invoke-Sqlcmd -Query $queryLogSize)
+                    } else {
+                        $dbQueryResultDb = (Invoke-Sqlcmd -Query $queryDbSize -ServerInstance ${env:computername}\$instance)
+                        $dbQueryResultLog = (Invoke-Sqlcmd -Query $queryLogSize -ServerInstance ${env:computername}\$instance)
+                    }
+                    $dbLogSize = [int]$dbQueryResultLog.Size_MB
+                    $dbSize = [int]$dbQueryResultDb.Size_MB
+					Write-Debug "dbName=$dbName dbSize=$dbSize MB. dbLogSize=$dbLogSize MB. Threshold: $log_size_threshold_values (Database $Loopcount of $totalDb)"
+					$dbLogFileName = $dbQueryResultLog.physical_name
 					$desc += "$dbName=$dbSize, Log=$dbLogSize. "
                     $perfData += "'"+$dbName+"_Size'=$dbSize[MB] '"+$dbName+"_Log_Size'=$dbLogSize[MB] "
 					$instanceRetCode, $instanceDesc = Get-LogFile-Threshold $dbSize $dbLogSize $log_size_threshold_values
@@ -491,10 +499,16 @@ Function Get-DataBases-Status ($InstancesList) {
 				$all_instance_db += $totalDb
 				Write-Debug "Total database count: $totalDb"
 				foreach($db in $sqlObj.Databases) {
+					Write-Debug "Connecting to $db"
 					$dbName = $db.Name
-					$dbStatus = $db.Status
+                    $query = "SELECT state_desc from sys.databases where name = '$dbName'"
+                    if ( $instance -eq "MSSQLSERVER" ) {
+                        $dbstatus = (Invoke-Sqlcmd -Query $query).state_desc
+                    } else {
+                        $dbstatus = (Invoke-Sqlcmd -Query $query -ServerInstance ${env:computername}\$instance).state_desc
+                    }
 					$desc += "$dbName=$dbStatus, "
-					if($dbStatus -notlike "*Normal*") {
+					if($dbStatus -notlike "*ONLINE*") {
 						$failedDBCount +=1
 						$failedDB += "$dbName=$dbStatus, "
 					}
@@ -765,7 +779,7 @@ process {
 	
 	$SERVER = $env:COMPUTERNAME
 	$SQL_CONFIG_FILE_NAME = "check_mssql_config.ini"
-	$SQL_CONFIG_FILE_FOLDER_NAME=".\"
+	$SQL_CONFIG_FILE_FOLDER_NAME="C:\NCPA\Plugins"
 	$SQL_CONFIG_FILE_FULL_PATH="$SQL_CONFIG_FILE_FOLDER_NAME\$SQL_CONFIG_FILE_NAME"
 	$SQL_CONFIG_EXCLUDE_NAME="Exclude"
 	$SQL_CONFIG_TEMPDB_SIZE_NAME="TempDB Size"
